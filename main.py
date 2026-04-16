@@ -88,14 +88,37 @@ def split_message(text):
 
 def search_notes(query, limit=5):
     try:
-        # 用關鍵字搜尋相關筆記
-        keywords = query[:50]
-        res = supabase.table('notes').select('title,content').ilike('content', f'%{keywords[:20]}%').limit(limit).execute()
-        if res.data:
-            return res.data
-        # 如果沒找到，用標題搜尋
-        res2 = supabase.table('notes').select('title,content').limit(limit).execute()
-        return res2.data if res2.data else []
+        # 提取關鍵字（取前幾個重要詞）
+        keywords = [w for w in query.replace('？', ' ').replace('?', ' ').replace('，', ' ').replace('的', ' ').replace('是', ' ').replace('什麼', ' ').split() if len(w) >= 2]
+        
+        results = []
+        seen = set()
+        
+        # 用每個關鍵字搜尋
+        for kw in keywords[:5]:
+            try:
+                res = supabase.table('notes').select('title,content').ilike('content', f'%{kw}%').limit(3).execute()
+                for item in res.data:
+                    key = item['title'] + item['content'][:50]
+                    if key not in seen:
+                        seen.add(key)
+                        results.append(item)
+            except:
+                continue
+        
+        # 也用標題搜尋
+        for kw in keywords[:3]:
+            try:
+                res = supabase.table('notes').select('title,content').ilike('title', f'%{kw}%').limit(3).execute()
+                for item in res.data:
+                    key = item['title'] + item['content'][:50]
+                    if key not in seen:
+                        seen.add(key)
+                        results.append(item)
+            except:
+                continue
+        
+        return results[:limit]
     except:
         return []
 
