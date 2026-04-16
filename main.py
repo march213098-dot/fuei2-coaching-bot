@@ -88,36 +88,48 @@ def split_message(text):
 
 def search_notes(query, limit=5):
     try:
-        # 提取關鍵字（取前幾個重要詞）
-        keywords = [w for w in query.replace('？', ' ').replace('?', ' ').replace('，', ' ').replace('的', ' ').replace('是', ' ').replace('什麼', ' ').split() if len(w) >= 2]
+        import re
+        # 用正則把中文拆成2-4字的片段
+        clean = re.sub(r'[？?，。！!的是什麼怎麼如何有沒有]', ' ', query)
+        words = clean.split()
         
+        # 額外把每個詞再切成2字片段
+        keywords = set()
+        for w in words:
+            if len(w) >= 2:
+                keywords.add(w)
+            for i in range(len(w)-1):
+                if len(w[i:i+2]) == 2:
+                    keywords.add(w[i:i+2])
+        
+        keywords = list(keywords)[:10]
         results = []
         seen = set()
-        
-        # 用每個關鍵字搜尋
-        for kw in keywords[:5]:
-            try:
-                res = supabase.table('notes').select('title,content').ilike('content', f'%{kw}%').limit(3).execute()
-                for item in res.data:
-                    key = item['title'] + item['content'][:50]
-                    if key not in seen:
-                        seen.add(key)
-                        results.append(item)
-            except:
-                continue
-        
-        # 也用標題搜尋
-        for kw in keywords[:3]:
+
+        # 標題優先搜尋
+        for kw in keywords:
             try:
                 res = supabase.table('notes').select('title,content').ilike('title', f'%{kw}%').limit(3).execute()
                 for item in res.data:
-                    key = item['title'] + item['content'][:50]
+                    key = item['title']
                     if key not in seen:
                         seen.add(key)
                         results.append(item)
             except:
                 continue
-        
+
+        # 內容搜尋
+        for kw in keywords[:6]:
+            try:
+                res = supabase.table('notes').select('title,content').ilike('content', f'%{kw}%').limit(2).execute()
+                for item in res.data:
+                    key = item['title'] + item['content'][:30]
+                    if key not in seen:
+                        seen.add(key)
+                        results.append(item)
+            except:
+                continue
+
         return results[:limit]
     except:
         return []
