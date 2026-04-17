@@ -522,7 +522,7 @@ def handle_message(event):
         send_reply(WELCOME_MESSAGE)
         return
 
-   if not user.get('identity'):
+    if not user.get('identity'):
         identity = None
         if user_msg in IDENTITY_MAP:
             identity = IDENTITY_MAP[user_msg]
