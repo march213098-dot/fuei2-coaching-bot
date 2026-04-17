@@ -566,6 +566,7 @@ def handle_message(event):
             notes_context += f"\n--- {note['title']} ---\n{note['content'][:400]}\n"
 
     identity = user.get('identity', '')
+    user_name = user.get('name', '')
     history = get_history(user_id)
 
     enriched_msg = user_msg + notes_context
@@ -576,7 +577,7 @@ def handle_message(event):
         response = claude.messages.create(
             model='claude-sonnet-4-20250514',
             max_tokens=1500,
-            system=SYSTEM_PROMPT + f'\n\n【本次服務對象：{identity}】請根據此身份調整回答的深度與語氣。',
+            system=SYSTEM_PROMPT + f'\n\n【本次服務對象：{identity}{"，名字：" + user_name if user_name else ""}】請根據此身份調整回答的深度與語氣，如果知道對方名字可以適時稱呼。',
             messages=history
         )
         reply_text = response.content[0].text
