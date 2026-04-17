@@ -522,7 +522,7 @@ def handle_message(event):
         send_reply(WELCOME_MESSAGE)
         return
 
-    if not user.get('identity'):
+   if not user.get('identity'):
         identity = None
         if user_msg in IDENTITY_MAP:
             identity = IDENTITY_MAP[user_msg]
@@ -541,8 +541,20 @@ def handle_message(event):
             return
 
         save_user(user_id, identity)
-        greeting = f"了解！你是{identity} 👍\n\n有什麼問題都可以問我，例如：\n· 七分鐘自我介紹怎麼說？\n· 轉介紹被拒絕怎麼辦？\n· 房產活化怎麼開口？\n· V系列怎麼跟客戶談？\n· 業績起不來怎麼辦？"
-        send_reply(greeting)
+        send_reply(f"了解！你是{identity} 👍\n\n請問你的名字是？（方便主管認識你）")
+        return
+
+    # 已有身份但還沒留名字
+    if not user.get('name'):
+        name = user_msg.strip()
+        if len(name) < 1 or len(name) > 10:
+            send_reply('請輸入你的名字（1-10個字）')
+            return
+        try:
+            supabase.table('users').update({'name': name}).eq('user_id', user_id).execute()
+        except:
+            pass
+        send_reply(f"謝謝你，{name}！有什麼問題都可以問我，例如：\n· 七分鐘自我介紹怎麼說？\n· 轉介紹被拒絕怎麼辦？\n· 房產活化怎麼開口？\n· V系列怎麼跟客戶談？\n· 業績起不來怎麼辦？")
         return
 
     # 搜尋相關筆記
