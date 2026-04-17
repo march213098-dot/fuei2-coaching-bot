@@ -537,7 +537,7 @@ def handle_message(event):
                 identity = IDENTITY_MAP['4']
 
         if not identity:
-            send_reply('請回覆數字 1、2、3 或 4 選擇你的身份，或直接說明你的狀況（例如：我是新人、我是主管）')
+            send_reply(WELCOME_MESSAGE)
             return
 
         save_user(user_id, identity)
@@ -548,7 +548,7 @@ def handle_message(event):
     if not user.get('name'):
         name = user_msg.strip()
         if len(name) < 1 or len(name) > 10:
-            send_reply('請輸入你的名字（1-10個字）')
+            send_reply(WELCOME_MESSAGE + '\n\n（請先選擇身份）')
             return
         try:
             supabase.table('users').update({'name': name}).eq('user_id', user_id).execute()
